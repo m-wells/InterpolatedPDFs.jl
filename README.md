@@ -1,4 +1,4 @@
-# InterpolatedPDFs.jl
+# InterpolatedPDFs.jl [![Build Status](https://travis-ci.com/m-wells/PiecewisePDFs.jl.svg?branch=master)](https://travis-ci.com/m-wells/PiecewisePDFs.jl)
 
 Simple extension of [Distributions.jl](https://github.com/JuliaStats/Distributions.jl) providing support for interpolaed pdfs.
 Currently only one type is implemented

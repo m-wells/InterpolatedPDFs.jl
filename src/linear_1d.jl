@@ -66,7 +66,7 @@ pdf(d::LinearInterpolatedPDF, x::AbstractVector{T}) where {T<:Real} = d.pdf_itp(
 cdf(d::LinearInterpolatedPDF, x::AbstractVector{T}) where {T<:Real} = d.cdf_itp(x)
 quantile(d::LinearInterpolatedPDF, x::AbstractVector{T}) where {T<:Real} = d.invcdf_itp(x)
 
-midpoints(x::AbstractRange) = range(first(x)+step(x)*(1//2), last(x)-step(x)*(1//2), length=length(x)-1)
+midpoints(x::AbstractRange) = range(first(x)+step(x)*(1//2), stop=last(x)-step(x)*(1//2), length=length(x)-1)
 midpoints(x::AbstractVector) = [(x[i]+x[i+1])*(1//2) for i in eachindex(x)[1:end-1]]
 
 """
@@ -78,7 +78,7 @@ See also: [`LinearInterpolatedPDF`](@ref)
 
 # Examples
 ```julia-repl
-julia> x = range(0,pi,length=5);
+julia> x = range(0, stop=pi, length=5);
 
 julia> s = acos.(rand(100));
 
@@ -112,7 +112,7 @@ function fit_cpl(x::AbstractArray, s::AbstractArray)
     length(x) < 2 && error("need a minimum of 2 breakpoints")
 
     cdf_x = [first(x), sort(s)..., last(x)]
-    cdf_y = range(0,1,length=length(cdf_x))
+    cdf_y = range(0, stop=1, length=length(cdf_x))
     cdf_itp = LinearInterpolation(cdf_x,cdf_y)
 
     invcdf_itp = LinearInterpolation(cdf_y,cdf_x)
