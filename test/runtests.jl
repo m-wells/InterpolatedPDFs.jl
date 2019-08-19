@@ -5,7 +5,7 @@ import Random.seed!
 seed!(1234)
 
 @testset "linear_1d" begin
-    x = range(0.0, π/2, length=10)
+    x = range(0.0, stop=π/2, length=10)
     d = fit_cpl(x, acos.(rand(10000)))
     @test isa(d, LinearInterpolatedPDF{Float64,1})
 
