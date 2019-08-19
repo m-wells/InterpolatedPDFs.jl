@@ -1,13 +1,13 @@
-using PiecewisePDFs
+using InterpolatedPDFs
 using Test
 
 import Random.seed!
 seed!(1234)
 
-@testset "piecewise_1d" begin
+@testset "linear_1d" begin
     x = range(0, π/2, length=10)
     d = fit_cpl(x, acos.(rand(10000)))
-    @test isa(d, ContinuousPiecewiseLinear{Float64,1})
+    @test isa(d, LinearInterpolatedPDF{Float64,1})
 
     r = maximum(abs.(pdf(d,x) .- sin.(x)))
     @test r < 0.05

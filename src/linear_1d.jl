@@ -1,7 +1,7 @@
 """
-    ContinuousPiecewiseLinear{T,D} <: ContinuousUnivariateDistribution
+    LinearInterpolatedPDF{T,D} <: ContinuousUnivariateDistribution
 
-A continuous univariate piecewise distribution.
+A continuous univariate linearly interpolated distribution.
 The pdf, cdf, and inverse cdf are interpolated.
 Using this construction directly requires the input to be normalized.
 
@@ -12,8 +12,8 @@ See also: [`fit_cpl`](@ref)
 julia> x,y = [1.0, 2.0, 3.0], [0.75, 0.5, 0.25]
 ([1.0, 2.0, 3.0], [0.75, 0.5, 0.25])
 
-julia> ContinuousPiecewiseLinear(x,y)
-ContinuousPiecewiseLinear{Float64,1}(
+julia> LinearInterpolatedPDF(x,y)
+LinearInterpolatedPDF{Float64,1}(
 pdf_itp: 3-element extrapolate(interpolate((::Array{Float64,1},), ::Array{Float64,1}, Gridded(Linear())), Throw()) with element type Float64:
  0.75
  0.5
@@ -38,12 +38,12 @@ julia> quantile(d,0.5)
 1.8
 ```
 """
-struct ContinuousPiecewiseLinear{T,D} <: ContinuousUnivariateDistribution
+struct LinearInterpolatedPDF{T,D} <: ContinuousUnivariateDistribution
     pdf_itp::Extrapolation
     cdf_itp::Extrapolation
     invcdf_itp::Extrapolation
 
-    function ContinuousPiecewiseLinear(x::AbstractVector{T}, y::AbstractVector{T}) where {T<:Real}
+    function LinearInterpolatedPDF(x::AbstractVector{T}, y::AbstractVector{T}) where {T<:Real}
         area = integrate(x,y)
         area ≈ 1 || error("Input is not normalized. integrate(x,y) = ", area)
         issorted(x) || error("x is not in ascending order")
@@ -58,13 +58,13 @@ struct ContinuousPiecewiseLinear{T,D} <: ContinuousUnivariateDistribution
     end
 end
 
-pdf(d::ContinuousPiecewiseLinear, x::T) where {T<:Real} = d.pdf_itp(x)
-cdf(d::ContinuousPiecewiseLinear, x::T) where {T<:Real} = d.cdf_itp(x)
-quantile(d::ContinuousPiecewiseLinear, x::T) where {T<:Real} = d.invcdf_itp(x)
+pdf(d::LinearInterpolatedPDF, x::T) where {T<:Real} = d.pdf_itp(x)
+cdf(d::LinearInterpolatedPDF, x::T) where {T<:Real} = d.cdf_itp(x)
+quantile(d::LinearInterpolatedPDF, x::T) where {T<:Real} = d.invcdf_itp(x)
 
-pdf(d::ContinuousPiecewiseLinear, x::AbstractVector{T}) where {T<:Real} = d.pdf_itp(x)
-cdf(d::ContinuousPiecewiseLinear, x::AbstractVector{T}) where {T<:Real} = d.cdf_itp(x)
-quantile(d::ContinuousPiecewiseLinear, x::AbstractVector{T}) where {T<:Real} = d.invcdf_itp(x)
+pdf(d::LinearInterpolatedPDF, x::AbstractVector{T}) where {T<:Real} = d.pdf_itp(x)
+cdf(d::LinearInterpolatedPDF, x::AbstractVector{T}) where {T<:Real} = d.cdf_itp(x)
+quantile(d::LinearInterpolatedPDF, x::AbstractVector{T}) where {T<:Real} = d.invcdf_itp(x)
 
 midpoints(x::AbstractRange) = range(first(x)+step(x)*(1//2), last(x)-step(x)*(1//2), length=length(x)-1)
 midpoints(x::AbstractVector) = [(x[i]+x[i+1])*(1//2) for i in eachindex(x)[1:end-1]]
@@ -72,9 +72,9 @@ midpoints(x::AbstractVector) = [(x[i]+x[i+1])*(1//2) for i in eachindex(x)[1:end
 """
     fit_cpl(x::AbstractArray, s::AbstractArray)
 
-Fit s with a ContinuousPiecewiseLinear distribution using x for the breakpoints.
+Fit s with a LinearInterpolatedPDF distribution using x for the breakpoints.
 
-See also: [`ContinuousPiecewiseLinear`](@ref)
+See also: [`LinearInterpolatedPDF`](@ref)
 
 # Examples
 ```julia-repl
@@ -83,7 +83,7 @@ julia> x = range(0,pi,length=5);
 julia> s = acos.(rand(100));
 
 julia> d = fit_cpl(x,s)
-ContinuousPiecewiseLinear{Float64,1}(
+LinearInterpolatedPDF{Float64,1}(
 pdf_itp: 5-element extrapolate(scale(interpolate(::Array{Float64,1}, BSpline(Linear())), (0.0:0.39269908169872414:1.5707963267948966,)), Throw()) with element type Float64:
  0.15242714502015237
  0.36726001464827923
@@ -128,10 +128,10 @@ function fit_cpl(x::AbstractArray, s::AbstractArray)
     #p[2:end-1] = Δymid./Δxmid
     p = diff(ymid)./diff(xmid)
 
-    return ContinuousPiecewiseLinear(x, p)
+    return LinearInterpolatedPDF(x, p)
 end
 
 using Random
 import Base.rand
-rand(rng::AbstractRNG, d::ContinuousPiecewiseLinear) = d.invcdf_itp(rand(rng))
-rand(rng::AbstractRNG, d::ContinuousPiecewiseLinear, n::Int) = d.invcdf_itp(rand(rng,n))
+rand(rng::AbstractRNG, d::LinearInterpolatedPDF) = d.invcdf_itp(rand(rng))
+rand(rng::AbstractRNG, d::LinearInterpolatedPDF, n::Int) = d.invcdf_itp(rand(rng,n))

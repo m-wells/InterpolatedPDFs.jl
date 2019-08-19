@@ -1,13 +1,13 @@
-# PiecewisePDFs.jl
+# InterpolatedPDFs.jl
 
-Simple extension of [Distributions.jl](https://github.com/JuliaStats/Distributions.jl) providing support for piecewise pdfs.
+Simple extension of [Distributions.jl](https://github.com/JuliaStats/Distributions.jl) providing support for interpolaed pdfs.
 Currently only one type is implemented
 
 ```
-ContinuousPiecewiseLinear{T,1} <: ContinuousUnivariateDistribution
+LinearInterpolatedPDF{T,1} <: ContinuousUnivariateDistribution
 ```
 
-A continuous univariate linear piecewise distribution.
+A continuous univariate linearly interpolated distribution.
 The pdf, cdf, and inverse cdf are interpolated using [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl).
 
 # Examples
@@ -19,7 +19,7 @@ julia> x = range(0, pi/2, length=10)
 julia> s = acos.(rand(1000));
 
 julia> d = fit_cpl(x,s)
-ContinuousPiecewiseLinear{Float64,1}(
+LinearInterpolatedPDF{Float64,1}(
 pdf_itp: 10-element extrapolate(scale(interpolate(::Array{Float64,1}, BSpline(Interpolations.Linear())), (0.0:0.17453292519943295:1.5707963267948966,)), Throw()) with element type Float64:
  0.0575436610456399
  0.18991497776431412

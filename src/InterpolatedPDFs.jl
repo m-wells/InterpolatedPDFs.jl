@@ -1,12 +1,12 @@
-module PiecewisePDFs
+module InterpolatedPDFs
 
 using Distributions
 using Interpolations
 using Interpolations: Extrapolation
 using NumericalIntegration
 
-export ContinuousPiecewiseLinear, fit_cpl, pdf, cdf, quantile
+export LinearInterpolatedPDF, fit_cpl, pdf, cdf, quantile
 
-include("piecewise_1d.jl")
+include("linear_1d.jl")
 
 end # module
