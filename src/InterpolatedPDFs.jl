@@ -1,12 +1,15 @@
 module InterpolatedPDFs
 
 using Distributions
-using Interpolations
-using Interpolations: Extrapolation
 using NumericalIntegration
 
-export LinearInterpolatedPDF, fit_cpl, pdf, cdf, quantile
+using Interpolations
+using Interpolations: Extrapolation, GriddedInterpolation, BSplineInterpolation
+
+export LinearInterpolatedPDF, fit_cpl, pdf, cdf, quantile, get_knots
 
 include("linear_1d.jl")
+
+#get_knots(d::LinearInterpolatedPDF) = d.pdf_itp
 
 end # module

@@ -1,5 +1,5 @@
 """
-    LinearInterpolatedPDF{T,D} <: ContinuousUnivariateDistribution
+    LinearInterpolatedPDF{T,N,ITP,IT} <: ContinuousUnivariateDistribution
 
 A continuous univariate linearly interpolated distribution.
 The pdf, cdf, and inverse cdf are interpolated.
@@ -38,25 +38,27 @@ julia> quantile(d,0.5)
 1.8
 ```
 """
-struct LinearInterpolatedPDF{T,D} <: ContinuousUnivariateDistribution
-    pdf_itp::Extrapolation
-    cdf_itp::Extrapolation
-    invcdf_itp::Extrapolation
-
-    function LinearInterpolatedPDF(x::AbstractVector{T}, y::AbstractVector{T}) where {T<:Real}
-        area = integrate(x,y)
-        area ≈ 1 || error("Input is not normalized. integrate(x,y) = ", area)
-        issorted(x) || error("x is not in ascending order")
-
-        pdf_itp = LinearInterpolation(x,y)
-
-        cdf_y = cumul_integrate(x,y)
-        cdf_itp = LinearInterpolation(x,cdf_y)
-        invcdf_itp = LinearInterpolation(cdf_y,x)
-
-        new{T,1}(pdf_itp,cdf_itp,invcdf_itp)
-    end
+struct LinearInterpolatedPDF{T,N,ITP,IT} <: ContinuousUnivariateDistribution
+    pdf_itp::Extrapolation{T,N,ITP,IT,Throw{Nothing}}
+    cdf_itp::Extrapolation{T,N,ITP,IT,Throw{Nothing}}
+    invcdf_itp::Extrapolation{T,N,<:GriddedInterpolation,<:Gridded{Linear},Throw{Nothing}}
 end
+
+function LinearInterpolatedPDF(x, y)
+    area = integrate(x,y)
+    area ≈ 1 || error("Input is not normalized. integrate(x,y) = ", area)
+    issorted(x) || error("x is not in ascending order")
+    
+    pdf_itp = LinearInterpolation(x,y)
+    
+    cdf_y = cumul_integrate(x,y)
+    cdf_itp = LinearInterpolation(x,cdf_y)
+    invcdf_itp = LinearInterpolation(cdf_y,x)
+    return LinearInterpolatedPDF(pdf_itp, cdf_itp, invcdf_itp)
+end
+
+get_knots(d::LinearInterpolatedPDF{T,1,ITP,BSpline{Linear}}) where {T,ITP} = first(d.pdf_itp.itp.ranges)
+get_knots(d::LinearInterpolatedPDF{T,1,ITP,Gridded{Linear}}) where {T,ITP} = first(d.pdf_itp.itp.knots)
 
 pdf(d::LinearInterpolatedPDF, x::T) where {T<:Real} = d.pdf_itp(x)
 cdf(d::LinearInterpolatedPDF, x::T) where {T<:Real} = d.cdf_itp(x)
@@ -104,28 +106,28 @@ invcdf_itp: 5-element extrapolate(interpolate((::Array{Float64,1},), ::Array{Flo
  1.5707963267948966
 )
 """
-function fit_cpl(x::AbstractArray, s::AbstractArray)
+function fit_cpl(x::AbstractVector{XT}, s::AbstractVector{YT}) where {XT<:Real, YT<:Real}
+    length(x) < 2 && error("need a minimum of 2 breakpoints")
     !issorted(x) && error("breakpoints are not in ascending order")
     minimum(s) < x[1] && error("encounter values below minimum breakpoint")
     maximum(s) > x[end] && error("encounter values above maximum breakpoint")
 
-    length(x) < 2 && error("need a minimum of 2 breakpoints")
-
-    cdf_x = [first(x), sort(s)..., last(x)]
+    T = promote_type(XT,YT)
+    cdf_x = Vector{T}(undef,length(s)+2)
+    cdf_x[1] = first(x)
+    cdf_x[2:end-1] = sort(s)
+    cdf_x[end] = last(x)
     cdf_y = range(0, stop=1, length=length(cdf_x))
     cdf_itp = LinearInterpolation(cdf_x,cdf_y)
 
     invcdf_itp = LinearInterpolation(cdf_y,cdf_x)
-
-    xmid = [first(x), midpoints(x)..., last(x)]
-    #Δxmid = diff(xmid)
+    
+    xmid = Vector{T}(undef,length(x)+1)
+    xmid[1] = first(x)
+    xmid[2:end-1] = midpoints(x)
+    xmid[end] = last(x)
     ymid = cdf_itp(xmid)
-    #Δymid = diff(ymid)
 
-    #p = similar(x)
-    #p[1] = first(ymid)/(first(xmid) - first(x))
-    #p[end] = (1 - last(ymid))/(last(x) - last(xmid))
-    #p[2:end-1] = Δymid./Δxmid
     p = diff(ymid)./diff(xmid)
 
     return LinearInterpolatedPDF(x, p)
