@@ -1,6 +1,7 @@
 # InterpolatedPDFs.jl
 [![Build Status](https://travis-ci.com/m-wells/InterpolatedPDFs.jl.svg?branch=master)](https://travis-ci.com/m-wells/InterpolatedPDFs.jl)
 [![codecov](https://codecov.io/gh/m-wells/InterpolatedPDFs.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/m-wells/InterpolatedPDFs.jl)
+[![Coverage Status](https://coveralls.io/repos/github/m-wells/InterpolatedPDFs.jl/badge.svg?branch=master)](https://coveralls.io/github/m-wells/InterpolatedPDFs.jl?branch=master)
 
 Simple extension of [Distributions.jl](https://github.com/JuliaStats/Distributions.jl) providing support for interpolaed pdfs.
 Currently only one type is implemented
