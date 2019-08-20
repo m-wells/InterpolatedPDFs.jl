@@ -136,4 +136,3 @@ end
 using Random
 import Base.rand
 rand(rng::AbstractRNG, d::LinearInterpolatedPDF) = d.invcdf_itp(rand(rng))
-rand(rng::AbstractRNG, d::LinearInterpolatedPDF, n::Int) = d.invcdf_itp(rand(rng,n))

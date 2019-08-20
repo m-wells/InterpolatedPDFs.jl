@@ -42,6 +42,29 @@ seed!(1234)
         @test quantile(d,1) == last(x)
     end
 
+    @testset "pdf cdf quantile check" begin
+        x = [0.0, 0.5, 1.0, 1.5, 2.0]
+        d = fit_cpl(x, 2.0.*rand(10))
+
+        y = 0.2
+        @test isa(pdf(d,y), Float64)
+        @test isa(cdf(d,y), Float64)
+        @test isa(quantile(d,y), Float64)
+
+        n = 10
+        y = pdf(d,2.0.*rand(n))
+        @test isa(y, Vector{Float64})
+        @test length(y) == n
+
+        y = cdf(d,2.0.*rand(n))
+        @test isa(y, Vector{Float64})
+        @test length(y) == n
+
+        y = quantile(d,rand(n))
+        @test isa(y, Vector{Float64})
+        @test length(y) == n
+    end
+
     @testset "error check" begin
         @test_throws ErrorException fit_cpl([0], rand(10))
 
