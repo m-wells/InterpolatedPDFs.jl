@@ -9,20 +9,21 @@ See also: [`fit_cpl`](@ref)
 
 # Examples
 ```julia-repl
+
 julia> x,y = [1.0, 2.0, 3.0], [0.75, 0.5, 0.25]
 ([1.0, 2.0, 3.0], [0.75, 0.5, 0.25])
 
 julia> LinearInterpolatedPDF(x,y)
-LinearInterpolatedPDF{Float64,1}(
-pdf_itp: 3-element extrapolate(interpolate((::Array{Float64,1},), ::Array{Float64,1}, Gridded(Linear())), Throw()) with element type Float64:
+LinearInterpolatedPDF{Float64,1,Interpolations.GriddedInterpolation{Float64,1,Float64,Interpolations.Gridded{Interpolations.Linear},Tuple{Array{Float64,1}}},Interpolations.Gridded{Interpolations.Linear}}(
+pdf_itp: 3-element extrapolate(interpolate((::Array{Float64,1},), ::Array{Float64,1}, Gridded(Interpolations.Linear())), Throw()) with element type Float64:
  0.75
  0.5
  0.25
-cdf_itp: 3-element extrapolate(interpolate((::Array{Float64,1},), ::Array{Float64,1}, Gridded(Linear())), Throw()) with element type Float64:
+cdf_itp: 3-element extrapolate(interpolate((::Array{Float64,1},), ::Array{Float64,1}, Gridded(Interpolations.Linear())), Throw()) with element type Float64:
  0.0
  0.625
  1.0
-invcdf_itp: 3-element extrapolate(interpolate((::Array{Float64,1},), ::Array{Float64,1}, Gridded(Linear())), Throw()) with element type Float64:
+invcdf_itp: 3-element extrapolate(interpolate((::Array{Float64,1},), ::Array{Float64,1}, Gridded(Interpolations.Linear())), Throw()) with element type Float64:
  1.0
  2.0
  3.0
