@@ -1,4 +1,6 @@
 # InterpolatedPDFs.jl
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://m-wells.github.io/InterpolatedPDFs.jl/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://m-wells.github.io/InterpolatedPDFs.jl/dev)
 [![Build Status](https://travis-ci.com/m-wells/InterpolatedPDFs.jl.svg?branch=master)](https://travis-ci.com/m-wells/InterpolatedPDFs.jl)
 [![codecov](https://codecov.io/gh/m-wells/InterpolatedPDFs.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/m-wells/InterpolatedPDFs.jl)
 [![Coverage Status](https://coveralls.io/repos/github/m-wells/InterpolatedPDFs.jl/badge.svg?branch=master)](https://coveralls.io/github/m-wells/InterpolatedPDFs.jl?branch=master&kill_cache=1)
