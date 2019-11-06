@@ -1,15 +1,23 @@
 module InterpolatedPDFs
 
-using Distributions
-using NumericalIntegration
-
+using FunctionWrappers: FunctionWrapper
+#using Distributions
+#using NumericalIntegration
+using MacroTools
+using Base.Iterators
 using Interpolations
-using Interpolations: Extrapolation, GriddedInterpolation, BSplineInterpolation
+using Interpolations: Extrapolation
+import Interpolations: coefficients, getknots
 
-export LinearInterpolatedPDF, fit_cpl, pdf, cdf, quantile, get_knots
+coefficients(etp::Extrapolation) = coefficients(etp.itp)
 
-include("linear_1d.jl")
+export @supportfunction, SupportedInterp
+#export LinearInterpolatedPDF, pdf, cdf, quantile
 
-#get_knots(d::LinearInterpolatedPDF) = d.pdf_itp
+#include("./linear_1d.jl")
+
+include("./support.jl")
+include("./cartesian_binning.jl")
+include("./multivariate.jl")
 
 end # module
