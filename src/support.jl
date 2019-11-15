@@ -1,55 +1,45 @@
 _get_typename(f::Function)::Core.TypeName = typeof(f).name
 _get_mt(n::Core.TypeName)::Core.MethodTable = n.mt
 _get_maxargs(mt::Core.MethodTable)::Int = mt.max_args
-
 _get_maxargs(f::Function)::Int = _get_maxargs(_get_mt(_get_typename(f)))
 _get_numargs(f::Function)::Int = _get_maxargs(f) - 1
 
-"""
-    SupportFunction(f::Function, expr::String)
-
-Stores function and a human readable version of the function.
-"""
-struct SupportFunction{T}
-    f::FunctionWrapper{Bool,T}
-    expr::String
-
-    function SupportFunction(f::Function, ::Type{T}, expr::Expr) where T<:Tuple
-        fstr = string(prettify(expr))
-        for t in fieldtypes(T)
-            if isabstracttype(t)
-                @warn """
-                    abstract types detected while constructing SupportFunction
-                        f: $fstr
-                        T: $T
-                    using abstract types carries a performance penality
-                    consider using concrete types
-                    """
-                break
-            end
+function SupportFunction(f::Function, ::Type{T}, expr::Expr) where T<:Tuple
+    fstr = string(prettify(expr))
+    for t in fieldtypes(T)
+        if isabstracttype(t)
+            @warn """
+                abstract types detected while constructing SupportFunction
+                    f: $fstr
+                    T: $T
+                using abstract types carries a performance penality
+                consider using concrete types
+                """
+            break
         end
-        n = length(fieldnames(T))
-        N = _get_numargs(f)
-        n == N || error("""
-            Number of function arguments does not match number of argument types.
-                f: $fstr
-                _get_numargs(f) = $N
-                typeof(args): $T
-                length(fieldnames(T)) = $n
-            """
-           )
-        return new{T}(f, string(prettify(expr)))
     end
-
-    function SupportFunction(f::Function, ::Type{T}, expr::Expr) where T
-        N = nfields(methods(f))
-        return SupportFunction(f, NTuple{N,T}, expr)
-    end
-
-    function SupportFunction(f::Function, expr::Expr)
-        return SupportFunction(f, Any, expr)
-    end
+    n = length(fieldnames(T))
+    N = _get_numargs(f)
+    n == N || error("""
+        Number of function arguments does not match number of argument types.
+            f: $fstr
+            _get_numargs(f) = $N
+            typeof(args): $T
+            length(fieldnames(T)) = $n
+        """
+       )
+    return SupportFunction{T}(f, string(prettify(expr)))
 end
+
+function SupportFunction(f::Function, ::Type{T}, expr::Expr) where T
+    N = nfields(methods(f))
+    return SupportFunction(f, NTuple{N,T}, expr)
+end
+
+function SupportFunction(f::Function, expr::Expr)
+    return SupportFunction(f, Any, expr)
+end
+
 
 """
     @supportfunction expr T
@@ -57,7 +47,7 @@ end
 Create a `SupportFunction` that evaluates an `expr` and takes arguments of type `T`.
 
 # Examples
-```julia-repl
+```julia-doctest
 julia> sf = @supportfunction (x,y)->sin(x)*y>1 Tuple{Float64,Int}
 SupportFunction:
    (x, y)->sin(x) * y > 1
@@ -73,111 +63,92 @@ macro supportfunction(expr,T)
     esc(:(InterpolatedPDFs.SupportFunction($expr, $T, $(Expr(:quote, expr)))))
 end
 
+"""
+    @supportfunction expr
+
+Create a `SupportFunction` that evaluates an `expr` and takes arguments of type `Any`.
+When possible use `@supportfunction expr T` where `T = Tuple{T1,T2,...}` where `T1,T2,...` are the types of the arguments.
+
+# Examples
+```julia-doctest
+julia> sf = @supportfunction (x,y)->sin(x)*y>1 Tuple{Float64,Int}
+SupportFunction:
+   (x, y)->sin(x) * y > 1
+
+julia> sf(π,3)
+false
+
+julia> sf(π/2,3)
+true
+```
+"""
 macro supportfunction(expr)
     esc(:(InterpolatedPDFs.SupportFunction($expr, $(Expr(:quote, expr)))))
 end
 
-(bf::SupportFunction)(args...) = bf.f(args...)::Bool
-(bf::SupportFunction)(args::Tuple) = (bf)(args...)
-
-Base.show(io::IO, sf::SupportFunction) = print(io, sf.expr)
-Base.show(io::IO, ::MIME"text/plain", sf::SupportFunction) =
-           print(io, "SupportFunction:\n   ", sf.expr)
+#is_supported(sf::SupportFunction{T}, x::T) where T = sf(x...)
+#function is_supported(sfs::Vector{SupportFunction{T}}, x::T) where T
+#    return all(sf -> is_supported(sf,x), sfs)
+#end
 
 """
-Wrapper around an interpolation that allows for well defined boundary conditions
+    SupportedInterp(interp::Extrapolation, sfs::Vector{SupportFunction})
+
+Create a supported interpolation.
 """
-struct SupportedInterp{T,N,ITP,IT,BC,S}
-    interp::Extrapolation{T,N,ITP,IT,BC}
-    support_functions::Vector{SupportFunction{S}}
-    boundary_mask::BitArray{N}
-
-    function SupportedInterp(interp::Extrapolation{T,N,ITP,IT,BC},
-                             sfs::Vector{SupportFunction{S}} = SupportFunction{Tuple{Nothing}}[]
-                            ) where {T,N,ITP,IT,BC,S}
-        knots = getknots(interp)
-        # validate input
-        for knot in Iterators.product(knots...)
-            for sf in sfs
-                # if knot is not supported and is not zero throw an error
-                if !sf(knot...) && !iszero(interp(knot...))
-                    throw(DomainError(knot, string(
-                        "Found non-zero out of bound element.\n",
-                        "knot = ", knot, "\n",
-                        "sf(knot...) = ", sf(knot...), "\n",
-                        "interp(knot...) = ", interp(knot...), "\n"
-                       )))
-                end
+function SupportedInterp(interp::Extrapolation{Float64,N,ITP,IT,BC},
+                         sfs::Vector{SupportFunction{S}}
+                        ) where {N,ITP,IT,BC,S}
+    knots = getknots(interp)
+    # validate input
+    for knot in Iterators.product(knots...)
+        for sf in sfs
+            # if knot is not supported and is not zero throw an error
+            if !sf(knot) && !iszero(interp(knot...))
+                throw(DomainError(knot, string(
+                    "Found non-zero out of bound element.\n",
+                    "knot = ", knot, "\n",
+                    "sf(knot...) = ", sf(knot...), "\n",
+                    "interp(knot...) = ", interp(knot...), "\n"
+                   )))
             end
         end
+    end
 
-        binds = eachbin(coefficients(interp))
-        boundary_mask = falses(size(binds))
-        for (i,bind) in enumerate(binds)
-            for sf in sfs
-                if !all(sf, knots[bind]) && !all(x->!sf(x), knots[bind])
-                    boundary_mask[i] = true
-                end
+    binds = eachbin(coefficients(interp))
+    boundary_mask = falses(size(binds))
+    for (i,bind) in enumerate(binds)
+        for sf in sfs
+            if !all(sf, knots[bind]) && !all(x->!sf(x), knots[bind])
+                boundary_mask[i] = true
             end
         end
-
-        return new{T,N,ITP,IT,BC,S}(interp, sfs, boundary_mask)
     end
 
-    function SupportedInterp(interp::Extrapolation, sf::SupportFunction)
-        return SupportedInterp(interp, [sf])
-    end
-
-    function SupportedInterp(knots, coeffs,
-                             sfs::Vector{SupportFunction{T}} = SupportFunction{Tuple{Nothing}}[]
-                            ) where T
-        interp = LinearInterpolation(knots, coeffs)
-        return SupportedInterp(interp, sfs)
-    end
-    
-    function SupportedInterp(knots, coeffs, sf::SupportFunction)
-        interp = LinearInterpolation(knots, coeffs)
-        return SupportedInterp(interp, [sf])
-    end
+    return SupportedInterp{N,ITP,IT,BC,S}(interp, sfs, boundary_mask)
 end
 
-function (sinterp::SupportedInterp)(args...)
-    for f in sinterp.support_functions
-        # if any of these evaluate false then return 0.0
-        !f(args...) && return 0.0
-    end
-    # otherwise use the interpolation
-    return sinterp.interp(args...)
-end
-(s::SupportedInterp)(args::Tuple) = (s)(args...)
+SupportedInterp(interp::Extrapolation, sf::SupportFunction) = SupportedInterp(interp, [sf])
 
-function Base.getindex(sinterp::SupportedInterp{T,N,ITP,IT,BC,S},
-                       cinds::CartesianIndices{N,NTuple{N,UnitRange{Int}}}
-                      ) where {T,N,ITP,IT,BC,S}
-    return coefficients(sinterp)[cinds]
-end
 
-function Base.show(io::IO, s::SupportedInterp)
-    println(io, s.interp)
-    println(io, s.support_functions)
-    print(io, s.boundary_mask)
-end
+"""
+    SupportedInterp(knots::NTuple{N,AbstractVector}, coeffs::AbstractArray{T,N}, [sfs])
 
-function Base.show(io::IO, ::MIME"text/plain", s::SupportedInterp)
-    println(io, "SupportedInterp")
-    print(io, "interp => ")
-    show(io, MIME("text/plain"), s.interp)
-    print(io, "\nsupport_functions => ")
-    show(io, MIME("text/plain"), s.support_functions)
-    print(io, "\nboundary_mask => ")
-    show(io, MIME("text/plain"), s.boundary_mask)
+Convenience function that creates a `SupportedInterp`.
+The optional `sfs` can be either a `SupportFunction` or a `Vector{SupportFunction}`.
+"""
+function SupportedInterp(knots::NTuple{N,AbstractVector},
+                         coeffs::AbstractArray{T,N},
+                         sfs = SupportFunction{Tuple{Nothing}}[]
+                        ) where {N,T}
+    interp = LinearInterpolation(knots, coeffs)
+    return SupportedInterp(interp, sfs)
 end
 
 getknots(s::SupportedInterp) = getknots(s.interp)
 coefficients(s::SupportedInterp) = coefficients(s.interp)
 
-getknots(s::SupportedInterp, cind) = getknots(getknots(s), cind)
-coefficients(s::SupportedInterp, cind) = coefficients(s.interp)[cind]
+getknots(s::SupportedInterp, i) = getknots(s)[i]
+coefficients(s::SupportedInterp, i) = coefficients(s.interp)[i]
 
-isboundary(s::SupportedInterp, cind::CartesianIndex) = s.boundary_mask[cind]
-isboundary(s::SupportedInterp, ind::Int) = s.boundary_mask[ind]
+isboundary(s::SupportedInterp, i) = s.boundary_mask[i]

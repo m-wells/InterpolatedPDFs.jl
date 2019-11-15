@@ -1,26 +1,4 @@
 """
-    EachBin(dims::Dims)
-    EachBin(X::AbstractArray)
-
-An iterable `EachBin` object that returns the CartesianIndices of the corners for each bin of the given `dims` or for an `AbstractArray`.
-"""
-struct EachBin{N}
-    indices::CartesianIndices{N,NTuple{N,UnitRange{Int64}}}
-    corners::CartesianIndices{N,NTuple{N,UnitRange{Int64}}}
-end
-
-function Base.show(io::IO, b::EachBin)
-    println(io, "EachBin.indices => ", b.indices)
-    println(io, "EachBin.corners => ", b.corners)
-end
-function Base.show(io::IO, ::MIME"text/plain", b::EachBin)
-    print(io, "EachBin.indices => ")
-    show(io, MIME("text/plain"), b.indices)
-    print(io, "\nEachBin.corners => ")
-    show(io, MIME("text/plain"), b.corners)
-end
-
-"""
     eachbin(X::AbstractArray)
 
 Create an iterable `EachBin` object that yields the CartesianIndices of the corners of each bin in an array `X`.
@@ -35,29 +13,57 @@ end
 eachbin(arr::AbstractArray) = eachbin(size(arr))
 eachbin(s::SupportedInterp) = eachbin(coefficients(s))
 
-Base.length(b::EachBin) = length(b.indices)
-Base.size(b::EachBin) = size(b.indices)
-
-function Base.iterate(b::EachBin, state=1)
-    state > length(b) && return nothing
-    return (b.indices[state] .+ b.corners, state+1)
-end
-
-function Base.getindex(b::EachBin, i::Int)
-    1 ≤ i ≤ length(b) || throw(BoundsError(b, i))
-    return b.indices[i] .+ b.corners
-end
-
-Base.firstindex(b::EachBin) = firstindex(b.indices)
-Base.lastindex(b::EachBin) = lastindex(b.indices)
-
 function Base.getindex(knots::NTuple{N,AbstractVector}, cind::CartesianIndex{N}) where {T,N}
     all(i->(1 ≤ i ≤ length(knots[i])), 1:N) || throw(BoundsError(knots, cind))
     return getindex.(knots,cind.I)
 end
 
-function Base.getindex(knots::NTuple{N,AbstractVector},
-                       cinds::CartesianIndices{N,NTuple{N,UnitRange{Int}}}
-                      ) where N
+function Base.getindex(knots::NTuple{N,AbstractVector}, cinds::CartUnitInds{N}) where N
     return map(x->getindex(knots,x), cinds)
+end
+
+
+"""
+    randpnt(x1::Real, x2::Real)
+
+Return a uniformly random value between `x1` and `x2`.
+"""
+randpnt(x1::Real,x2::Real) = x1 + rand()*(x2-x1)
+
+"""
+    randpnt(x::AbstractVector, inds::UnitRange{Int})
+
+Return a random value between `x[first(inds)]` and `x[last(inds)]`.
+"""
+function randpnt(x::AbstractVector, inds::UnitRange{Int})
+    i1,i2 = extrema(inds)
+    @inbounds return randpnt(x[i1],x[i2])
+end
+
+"""
+    randpnt(knots::NTuple{N,AbstractVector}, cinds::CartUnitInds{N})
+
+Generate a uniformly random point (`Tuple`) for a given bin.
+The corners of the bin are given by `cinds` and `knots` define the coordinate axes.
+
+# Examples
+```julia-repl
+julia> knots = ([0.0,0.2,0.4,0.6],[1.0,2.0,3.0],[0,π]);
+
+julia> inds = CartesianIndices((3:4,2:3,1:2));
+
+julia> randpnt(knots,inds)
+(0.5376059603415213, 2.2621926859178796, 0.2515135019823618)
+
+```
+"""
+function randpnt(knots::NTuple{N,AbstractVector}, cinds::CartUnitInds{N}) where N
+    @inbounds return ntuple(i -> randpnt(knots[i], cinds.indices[i]), Val(N))
+end
+
+function randpnt(s::SupportedInterp{N,ITP,IT,BC,S},
+                 cinds::CartUnitInds{N}
+                ) where {N,ITP,IT,BC,S}
+    knots = getknots(s)
+    return randpnt(knots, cinds)
 end
