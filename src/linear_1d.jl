@@ -99,6 +99,7 @@ invcdf_itp: 5-element extrapolate(interpolate((::Array{Float64,1},), ::Array{Flo
  1.1780972450961724
  1.5707963267948966
 )
+```
 """
 function fit_cpl(x::AbstractVector{XT}, s::AbstractVector{YT}) where {XT<:Real, YT<:Real}
     length(x) < 2 && error("need a minimum of 2 breakpoints")
