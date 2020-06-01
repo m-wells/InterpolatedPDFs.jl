@@ -49,9 +49,9 @@ function LinearInterpolatedPDF(x, y)
     area = integrate(x,y)
     area ≈ 1 || error("Input is not normalized. integrate(x,y) = ", area)
     issorted(x) || error("x is not in ascending order")
-    
+
     pdf_itp = LinearInterpolation(x,y)
-    
+
     cdf_y = cumul_integrate(x,y)
     cdf_itp = LinearInterpolation(x,cdf_y)
     invcdf_itp = LinearInterpolation(cdf_y,x)
@@ -61,16 +61,9 @@ end
 get_knots(d::LinearInterpolatedPDF{T,1,ITP,BSpline{Linear}}) where {T,ITP} = first(d.pdf_itp.itp.ranges)
 get_knots(d::LinearInterpolatedPDF{T,1,ITP,Gridded{Linear}}) where {T,ITP} = first(d.pdf_itp.itp.knots)
 
-pdf(d::LinearInterpolatedPDF, x::T) where {T<:Real} = d.pdf_itp(x)
-cdf(d::LinearInterpolatedPDF, x::T) where {T<:Real} = d.cdf_itp(x)
-quantile(d::LinearInterpolatedPDF, x::T) where {T<:Real} = d.invcdf_itp(x)
-
-pdf(d::LinearInterpolatedPDF, x::AbstractVector{T}) where {T<:Real} = d.pdf_itp(x)
-cdf(d::LinearInterpolatedPDF, x::AbstractVector{T}) where {T<:Real} = d.cdf_itp(x)
-quantile(d::LinearInterpolatedPDF, x::AbstractVector{T}) where {T<:Real} = d.invcdf_itp(x)
-
-midpoints(x::AbstractRange) = range(first(x)+step(x)*(1//2), stop=last(x)-step(x)*(1//2), length=length(x)-1)
-midpoints(x::AbstractVector) = [(x[i]+x[i+1])*(1//2) for i in eachindex(x)[1:end-1]]
+Distributions.pdf(d::LinearInterpolatedPDF, x::Real) = d.pdf_itp(x)
+Distributions.cdf(d::LinearInterpolatedPDF, x::Real) = d.cdf_itp(x)
+Distributions.quantile(d::LinearInterpolatedPDF, x::Real) = d.invcdf_itp(x)
 
 """
     fit_cpl(x::AbstractArray, s::AbstractArray)
@@ -122,7 +115,7 @@ function fit_cpl(x::AbstractVector{XT}, s::AbstractVector{YT}) where {XT<:Real, 
     cdf_itp = LinearInterpolation(cdf_x,cdf_y)
 
     invcdf_itp = LinearInterpolation(cdf_y,cdf_x)
-    
+
     xmid = Vector{T}(undef,length(x)+1)
     xmid[1] = first(x)
     xmid[2:end-1] = midpoints(x)
@@ -134,6 +127,4 @@ function fit_cpl(x::AbstractVector{XT}, s::AbstractVector{YT}) where {XT<:Real, 
     return LinearInterpolatedPDF(x, p)
 end
 
-using Random
-import Base.rand
-rand(rng::AbstractRNG, d::LinearInterpolatedPDF) = d.invcdf_itp(rand(rng))
+Base.rand(rng::AbstractRNG, d::LinearInterpolatedPDF) = d.invcdf_itp(rand(rng))
