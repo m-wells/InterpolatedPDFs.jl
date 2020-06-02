@@ -39,10 +39,10 @@ julia> quantile(d,0.5)
 1.8
 ```
 """
-struct LinearInterpolatedPDF{T,N,ITP,IT} <: ContinuousUnivariateDistribution
-    pdf_itp::Extrapolation{T,N,ITP,IT,Throw{Nothing}}
-    cdf_itp::Extrapolation{T,N,ITP,IT,Throw{Nothing}}
-    invcdf_itp::Extrapolation{T,N,<:GriddedInterpolation,<:Gridded{Linear},Throw{Nothing}}
+struct LinearInterpolatedPDF{P,C,I} <: ContinuousUnivariateDistribution
+    pdf_itp::P
+    cdf_itp::C
+    invcdf_itp::I
 end
 
 function LinearInterpolatedPDF(x, y)
@@ -58,8 +58,9 @@ function LinearInterpolatedPDF(x, y)
     return LinearInterpolatedPDF(pdf_itp, cdf_itp, invcdf_itp)
 end
 
-get_knots(d::LinearInterpolatedPDF{T,1,ITP,BSpline{Linear}}) where {T,ITP} = first(d.pdf_itp.itp.ranges)
-get_knots(d::LinearInterpolatedPDF{T,1,ITP,Gridded{Linear}}) where {T,ITP} = first(d.pdf_itp.itp.knots)
+Base.eltype(::Type{LinearInterpolatedPDF{P,C,I}}) where {P,C,I} = eltype(I)
+
+Interpolations.getknots(d::LinearInterpolatedPDF) = first(getknots(d.pdf_itp))
 
 Distributions.pdf(d::LinearInterpolatedPDF, x::Real) = d.pdf_itp(x)
 Distributions.cdf(d::LinearInterpolatedPDF, x::Real) = d.cdf_itp(x)
