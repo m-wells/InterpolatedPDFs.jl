@@ -9,7 +9,7 @@ Random.seed!(1234)
     @testset "UnitRange knots" begin
         x = 0:10
         d = fit_cpl(x, 10.0.*rand(10))
-        @test get_knots(d) == x
+        @test getknots(d) == x
 
         @test iszero(cdf(d, first(x)))
         @test isone(cdf(d, last(x)))
@@ -21,7 +21,7 @@ Random.seed!(1234)
     @testset "StepRangeLen knots" begin
         x = range(0, stop=5, length=10)
         d = fit_cpl(x, 5.0.*rand(10))
-        @test get_knots(d) == x
+        @test getknots(d) == x
 
         @test iszero(cdf(d, first(x)))
         @test isone(cdf(d, last(x)))
@@ -33,7 +33,7 @@ Random.seed!(1234)
     @testset "Vector knots" begin
         x = [0.0, 0.5, 1.0, 1.5, 2.0]
         d = fit_cpl(x, 2.0.*rand(10))
-        @test get_knots(d) == x
+        @test getknots(d) == x
 
         @test iszero(cdf(d, first(x)))
         @test isone(cdf(d, last(x)))
