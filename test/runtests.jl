@@ -1,15 +1,15 @@
 using InterpolatedPDFs
+using Random
 using Test
 
-import Random.seed!
-seed!(1234)
+Random.seed!(1234)
 
 @testset "linear_1d" begin
 
     @testset "UnitRange knots" begin
         x = 0:10
         d = fit_cpl(x, 10.0.*rand(10))
-        @test get_knots(d) == x
+        @test getknots(d) == x
 
         @test iszero(cdf(d, first(x)))
         @test isone(cdf(d, last(x)))
@@ -21,7 +21,7 @@ seed!(1234)
     @testset "StepRangeLen knots" begin
         x = range(0, stop=5, length=10)
         d = fit_cpl(x, 5.0.*rand(10))
-        @test get_knots(d) == x
+        @test getknots(d) == x
 
         @test iszero(cdf(d, first(x)))
         @test isone(cdf(d, last(x)))
@@ -33,7 +33,7 @@ seed!(1234)
     @testset "Vector knots" begin
         x = [0.0, 0.5, 1.0, 1.5, 2.0]
         d = fit_cpl(x, 2.0.*rand(10))
-        @test get_knots(d) == x
+        @test getknots(d) == x
 
         @test iszero(cdf(d, first(x)))
         @test isone(cdf(d, last(x)))
@@ -52,15 +52,15 @@ seed!(1234)
         @test isa(quantile(d,y), Float64)
 
         n = 10
-        y = pdf(d,2.0.*rand(n))
+        y = pdf.(Ref(d), 2 .* rand(n))
         @test isa(y, Vector{Float64})
         @test length(y) == n
 
-        y = cdf(d,2.0.*rand(n))
+        y = cdf.(Ref(d), 2 .* rand(n))
         @test isa(y, Vector{Float64})
         @test length(y) == n
 
-        y = quantile(d,rand(n))
+        y = quantile.(Ref(d), rand(n))
         @test isa(y, Vector{Float64})
         @test length(y) == n
     end
@@ -79,7 +79,7 @@ seed!(1234)
         x = range(0, stop=π/2, length=20)
         d = fit_cpl(x, acos.(rand(100000)))
         xmid = InterpolatedPDFs.midpoints(x)
-        @test maximum(abs.(pdf(d,xmid) .- sin.(xmid))) < 0.02
+        @test maximum(abs.(pdf.(Ref(d), xmid) .- sin.(xmid))) < 0.02
     end
 
     @testset "sampling" begin
