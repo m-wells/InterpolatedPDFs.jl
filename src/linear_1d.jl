@@ -9,7 +9,6 @@ See also: [`fit_cpl`](@ref)
 
 # Examples
 ```julia-repl
-
 julia> x,y = [1.0, 2.0, 3.0], [0.75, 0.5, 0.25]
 ([1.0, 2.0, 3.0], [0.75, 0.5, 0.25])
 
@@ -68,10 +67,7 @@ Distributions.quantile(d::LinearInterpolatedPDF, x::Real) = d.invcdf_itp(x)
 
 """
     fit_cpl(x::AbstractArray, s::AbstractArray)
-
-Fit s with a LinearInterpolatedPDF distribution using x for the breakpoints.
-
-See also: [`LinearInterpolatedPDF`](@ref)
+Fits a [`LinearInterpolatedPDF`](@ref) distribution to `s` using `x` for the breakpoints.
 
 # Examples
 ```julia-repl
