@@ -8,7 +8,7 @@
 Simple extension of [Distributions.jl](https://github.com/JuliaStats/Distributions.jl) providing support for interpolated pdfs.
 Currently only one type is implemented
 
-```
+```julia
 LinearInterpolatedPDF{T,1,ITP,IT} <: ContinuousUnivariateDistribution
 ```
 
@@ -17,7 +17,7 @@ The pdf, cdf, and inverse cdf are interpolated using [Interpolations.jl](https:/
 
 # Examples
 The easiest way to create a distribution is to use `fit_cpl`
-```
+```julia
 julia> x = range(0,pi/2,length=10)
 0.0:0.17453292519943295:1.5707963267948966
 
@@ -62,7 +62,7 @@ invcdf_itp: 10-element extrapolate(interpolate((::Array{Float64,1},), ::Array{Fl
 ```
 
 After fitting the distribution you can do useful things like
-```
+```julia
 julia> pdf(d,1)
 0.7933936499734955
 
