@@ -16,14 +16,14 @@ A continuous univariate linearly interpolated distribution.
 The pdf, cdf, and inverse cdf are interpolated using [Interpolations.jl](https://github.com/JuliaMath/Interpolations.jl).
 
 # Examples
-The easiest way to create a distribution is to use `fit_cpl`
+The easiest way to create a distribution is to use `fit_pdf`
 ```julia
 julia> x = range(0,pi/2,length=10)
 0.0:0.17453292519943295:1.5707963267948966
 
 julia> s = acos.(rand(1000));
 
-julia> d = fit_cpl(x,s)
+julia> d = fit_pdf(x,s)
 LinearInterpolatedPDF{Float64,1,Interpolations.ScaledInterpolation{Float64,1,Interpolations.BSplineInterpolation{Float64,1,Array{Float64,1},Interpolations.BSpline{Interpolations.Linear},Tuple{Base.OneTo{Int64}}},Interpolations.BSpline{Interpolations.Linear},Tuple{StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64}}}},Interpolations.BSpline{Interpolations.Linear}}(
 pdf_itp: 10-element extrapolate(scale(interpolate(::Array{Float64,1}, BSpline(Interpolations.Linear())), (0.0:0.17453292519943295:1.5707963267948966,)), Throw()) with element type Float64:
  0.02655632680672288

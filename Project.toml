@@ -1,7 +1,7 @@
 name = "InterpolatedPDFs"
 uuid = "dd871ef8-c280-11e9-0edd-21d59c0cc143"
 authors = ["m-wells <maw461@psu.edu>"]
-version = "0.1.1"
+version = "0.2.0"
 
 [deps]
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
